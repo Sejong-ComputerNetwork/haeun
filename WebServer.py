@@ -163,8 +163,8 @@ def handle_client(client_socket, client_address):
 
 
 def main():
-    HOST = "0.0.0.0"
-    PORT = 9999
+    HOST = socket.gethostname()
+    PORT = 1234
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((HOST, PORT))

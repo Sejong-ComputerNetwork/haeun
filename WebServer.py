@@ -1,8 +1,18 @@
 import socket
 import threading
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO)
+
+# HTML 파일 읽기 함수
+def load_html(filename):
+    filepath = os.path.join("templates", filename)
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<h1>404 File Not Found</h1>"
 
 def parse_http_request(data):
     lines = data.split("\r\n")
@@ -12,16 +22,16 @@ def parse_http_request(data):
 
 def route(path):
     if path == '/':
-        return "<h1>Welcome to My Web Server</h1>"
-    elif path == '/about':
-        return "<h1>About This Server</h1>"
+        return load_html("index.html")
+    elif path == '/submit':
+        return load_html("submit.html")
     else:
-        return "<h1>404 Not Found</h1>"
+        return load_html("404.html")
 
 def build_response(body, status="200 OK", content_type="text/html"):
     response = (
         f"HTTP/1.1 {status}\r\n"
-        f"Content-Type: {content_type}\r\n"
+        f"Content-Type: {content_type}; charset=utf-8\r\n"
         f"Content-Length: {len(body.encode())}\r\n"
         "\r\n"
         f"{body}"
@@ -31,6 +41,7 @@ def build_response(body, status="200 OK", content_type="text/html"):
 def handle_client(client_socket, client_address):
     logging.info(f"Client connected: {client_address}")
     data = client_socket.recv(1024).decode()
+
     if not data:
         client_socket.close()
         return
@@ -48,7 +59,7 @@ def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((HOST, PORT))
     server_socket.listen(5)
-    logging.info(f"HTTP Server running on {HOST}:{PORT}")
+    logging.info(f"HTTP Server running on http://localhost:{PORT}")
 
     try:
         while True:
@@ -56,7 +67,7 @@ def main():
             thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
             thread.start()
     except KeyboardInterrupt:
-        logging.info("서버 종료 중... (Ctrl + C 입력됨)")
+        logging.info("서버 종료 중...")
     finally:
         server_socket.close()
         logging.info("서버가 정상적으로 종료되었습니다.")

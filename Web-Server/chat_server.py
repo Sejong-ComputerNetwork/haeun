@@ -66,7 +66,6 @@ if __name__ == '__main__':
         group.append(conn)
         print('Connected ' + str(addr))
 
-        # [팀원 코드의 특징] 
         # 새 클라이언트가 올 때마다 Send 스레드에게 'Group Changed'를 보내 기존 스레드를 죽이고
         # 갱신된 group 리스트를 가진 새 Send 스레드를 시작함.
         if count > 1:
@@ -79,4 +78,5 @@ if __name__ == '__main__':
 
         # 각 클라이언트마다 '듣기 전용(Recv)' 스레드 생성
         thread2 = threading.Thread(target=Recv, args=(conn, count, send_queue,))
+
         thread2.start()

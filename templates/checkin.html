@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출석 체크 시스템</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 10px; background-color: #5c6bc0; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #3f51b5; }
+        
+        /* 상태 메시지 박스 스타일 */
+        #message-box { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; } /* 초록색 */
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; } /* 노란색 */
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }   /* 빨간색 */
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>? 출석 체크</h2>
+        <input type="text" id="student_id" placeholder="학번을 입력하세요 (예: 21011628)">
+        <input type="text" id="name" placeholder="이름을 입력하세요">
+        <button onclick="sendCheckIn()">출석하기</button>
+
+        <div id="message-box"></div>
+    </div>
+
+    <script>
+        function sendCheckIn() {
+            // 1. 입력한 정보 가져오기
+            const id = document.getElementById('student_id').value;
+            const name = document.getElementById('name').value;
+            const msgBox = document.getElementById('message-box');
+
+            if (!id || !name) {
+                alert("학번과 이름을 모두 입력해주세요.");
+                return;
+            }
+
+            // 2. 서버로 보내기 (POST 요청)
+            fetch('/api/checkin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ "id": id, "name": name })
+            })
+            .then(response => {
+                // 3. [핵심 역할] 서버가 준 숫자(Status Code)에 따라 반응하기
+                response.json().then(data => {
+                    msgBox.style.display = "block"; // 박스 보여주기
+                    msgBox.innerText = data.msg;    // 서버 메시지 출력
+                    
+                    // 기존 색상 클래스 다 지우기
+                    msgBox.classList.remove("success", "warning", "error");
+
+                    if (response.status === 200) {
+                        // 200 OK: 성공 -> 초록색
+                        msgBox.classList.add("success");
+                        // 성공하면 입력창 비워주기
+                        document.getElementById('student_id').value = "";
+                        document.getElementById('name').value = "";
+                    } 
+                    else if (response.status === 202) {
+                        // 202 Accepted: 이미 함 -> 노란색
+                        msgBox.classList.add("warning");
+                    } 
+                    else if (response.status === 401) {
+                        // 401 Unauthorized: 실패 -> 빨간색
+                        msgBox.classList.add("error");
+                    }
+                    else {
+                        // 그 외 에러
+                        msgBox.classList.add("error");
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("서버와 통신 중 오류가 발생했습니다.");
+            });
+        }
+    </script>
+
+</body>
+</html>

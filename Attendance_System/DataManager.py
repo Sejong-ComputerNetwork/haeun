@@ -50,3 +50,6 @@ class DataManager:
 if __name__ == "__main__":
     dm = DataManager()
     print(dm.mark_attendance("2024001", "김철수"))
+
+def get_all_data(self):
+        return self.data

@@ -46,7 +46,7 @@ class DataManager:
         self._save_data()
         return "SUCCESS"
         
-def get_all_data(self):
+    def get_all_data(self):
         return self.data
 
 
@@ -54,3 +54,4 @@ def get_all_data(self):
 if __name__ == "__main__":
     dm = DataManager()
     print(dm.mark_attendance("2024001", "김철수"))
+

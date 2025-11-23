@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>관리자 페이지</title>
+    <link rel="stylesheet" href="admin-style.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>출석 현황</h2>
+
+      <!-- 학생 테이블 -->
+      <table id="studentTable">
+        <tr>
+          <th>학번</th>
+          <th>이름</th>
+          <th>출석</th>
+        </tr>
+        <!-- JS가 여기에 학생 행 추가 -->
+      </table>
+      <!-- 학생 추가 폼 -->
+      <div class="add-student">
+        <label>학번:</label>
+        <input type="text" id="newId" placeholder="학번 입력" />
+        <label>이름:</label>
+        <input type="text" id="newName" placeholder="이름 입력" />
+        <button onclick="addStudent()">학생 추가</button>
+      </div>
+
+      <button id="saveBtn" onclick="saveChanges()">변경 사항 저장</button>
+    </div>
+
+    <script>
+      window.onload = loadStudents;
+
+      // 학생 목록 GET
+      async function loadStudents() {
+        const res = await fetch("/api/students");
+        const students = await res.json();
+        const table = document.getElementById("studentTable");
+
+        // 테이블 초기화 (헤더 제외)
+        table
+          .querySelectorAll("tr:not(:first-child)")
+          .forEach((tr) => tr.remove());
+
+        students.forEach((stu) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+          <td>${stu.id}</td>
+          <td>${stu.name}</td>
+          <td><input type="checkbox" class="circle-check" ${
+            stu.attend ? "checked" : ""
+          }></td>
+        `;
+          table.appendChild(row);
+        });
+      }
+
+      // 학생 추가
+      async function addStudent() {
+        const id = document.getElementById("newId").value.trim();
+        const name = document.getElementById("newName").value.trim();
+
+        if (!id || !name) {
+          alert("학번과 이름을 모두 입력하세요.");
+          return;
+        }
+
+        // POST 요청으로 서버에 학생 추가
+        const res = await fetch("/api/students", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, name, attend: false }),
+        });
+
+        if (res.status === 201) {
+          alert("학생이 추가되었습니다.");
+          document.getElementById("newId").value = "";
+          document.getElementById("newName").value = "";
+          loadStudents(); // 테이블 갱신
+        } else {
+          const data = await res.json();
+          alert(`오류: ${data.message}`);
+        }
+      }
+
+      // 저장 버튼 (PUT API) — 서버 구현 필요
+      function saveChanges() {
+        alert("PUT API로 변경사항을 서버에 저장할 예정!");
+      }
+    </script>
+  </body>
+</html>

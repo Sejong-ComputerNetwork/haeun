@@ -2,83 +2,51 @@ import json
 import os
 
 class DataManager:
-    def __init__(self, attendance_file="today_attendance.json"):
-        self.attendance_file = attendance_file # Ãâ¼® ±â·Ï¿ë ÆÄÀÏ (»õ·Î »ı±è)
-        self.db_folder = "./db/" # ±âÁ¸ ÇĞ»ı Á¤º¸°¡ ÀÖ´Â Æú´õ
-        self.attendance_data = {} # ¸Ş¸ğ¸®¿¡ ¶ç¿ï Ãâ¼®ºÎ
-        
-        self._load_attendance() # ¼­¹ö ÄÑÁú ¶§ Ãâ¼®ºÎ ÁØºñ
+    def __init__(self):
+        self.filename = "./db/student-info.json"
+        self.data = [] 
+        self._load_data()
 
-    # [³»ºÎÇÔ¼ö] ¿À´ÃÀÇ Ãâ¼®ºÎ ÆÄÀÏ ÀĞ¾î¿À±â
-    def _load_attendance(self):
-        if not os.path.exists(self.attendance_file):
-            # ÆÄÀÏÀÌ ¾øÀ¸¸é ºó Ãâ¼®ºÎ »ı¼º
-            self.attendance_data = {}
-            self._save_attendance()
-            print(f"[ÃÊ±âÈ­] {self.attendance_file} Ãâ¼®ºÎ¸¦ »õ·Î ¸¸µé¾ú½À´Ï´Ù.")
+    def _load_data(self):
+        if not os.path.exists(self.filename):
+            print(f"[ì•Œë¦¼] {self.filename} íŒŒì¼ì´ ì—†ìŠµë‹ˆë‹¤. ë¹ˆ ë¦¬ìŠ¤íŠ¸ë¡œ ì‹œì‘í•©ë‹ˆë‹¤.")
+            self.data = []
         else:
-            with open(self.attendance_file, 'r', encoding='utf-8') as f:
-                self.attendance_data = json.load(f)
-            print(f"[·Îµå] Ãâ¼® ±â·ÏÀ» ºÒ·¯¿Ô½À´Ï´Ù.")
-
-    # [³»ºÎÇÔ¼ö] Ãâ¼®ºÎ ÀúÀåÇÏ±â
-    def _save_attendance(self):
-        with open(self.attendance_file, 'w', encoding='utf-8') as f:
-            json.dump(self.attendance_data, f, indent=4, ensure_ascii=False)
-
-    # ==========================================================
-    # [¾÷±×·¹ÀÌµåµÈ ÇÙ½É ±â´É] ±âÁ¸ db Æú´õ¿Í ¿¬µ¿!
-    # ==========================================================
-
-    # 1. ÀÌ¸§ & ÇĞ¹ø È®ÀÎ ÇÔ¼ö (±âÁ¸ db Æú´õ È°¿ë!)
-    def verify_student(self, student_id, name):
-        # 1) db Æú´õ¿¡ ÇØ´ç ÇĞ¹ø ÆÄÀÏÀÌ ÀÖ´ÂÁö È®ÀÎ
-        target_file = os.path.join(self.db_folder, f"{student_id}.json")
-        
-        if os.path.exists(target_file):
-            # 2) ÆÄÀÏÀÌ ÀÖÀ¸¸é ¿­¾î¼­ ÀÌ¸§ÀÌ ¸Â´ÂÁö È®ÀÎ
             try:
-                with open(target_file, 'r', encoding='utf-8') as f:
-                    user_info = json.load(f)
-                    # db ÆÄÀÏ ¾ÈÀÇ "name"°ú ÀÔ·Â¹ŞÀº nameÀÌ °°ÀºÁö?
-                    if user_info.get("name") == name:
-                        return True # ÀÎÁõ ¼º°ø!
+                with open(self.filename, 'r', encoding='utf-8') as f:
+                    self.data = json.load(f)
+                print(f"[ë¡œë“œ] {len(self.data)}ëª…ì˜ í•™ìƒ ì •ë³´ë¥¼ ë¶ˆëŸ¬ì™”ìŠµë‹ˆë‹¤.")
             except Exception as e:
-                print(f"[¿¡·¯] ÆÄÀÏ ÀĞ±â ½ÇÆĞ: {e}")
-                return False
-        
-        return False # ÆÄÀÏÀÌ ¾ø°Å³ª ÀÌ¸§ÀÌ Æ²¸²
+                print(f"[ì—ëŸ¬] DB ë¡œë”© ì‹¤íŒ¨: {e}")
+                self.data = []
 
-    # 2. Ãâ¼®Ã¼Å© ¹Ù²ãÁÖ´Â ÇÔ¼ö
-    # (Ãâ¼®ÇÏ¸é attendance_data¿¡ ±â·ÏµÊ)
+    def _save_data(self):
+        with open(self.filename, 'w', encoding='utf-8') as f:
+            json.dump(self.data, f, indent=4, ensure_ascii=False)
+
     def mark_attendance(self, student_id, name):
-        # ÀÌ¹Ì Ãâ¼®ºÎ¿¡ ÀÖ´ÂÁö È®ÀÎ
-        if student_id in self.attendance_data:
-            return "ALREADY" # ÀÌ¹Ì Ãâ¼®ÇÔ
+        # 1. ë¦¬ìŠ¤íŠ¸ë¥¼ ëŒë©´ì„œ í•´ë‹¹ í•™ë²ˆê³¼ ì´ë¦„ì´ ë§ëŠ”ì§€ ì°¾ìŒ
+        found_student = None
+        for student in self.data:
+            # json íŒŒì¼ì˜ í‚¤ê°’("id", "name")ê³¼ ë¹„êµ
+            if student.get("id") == student_id and student.get("name") == name:
+                found_student = student
+                break
         
-        # Ãâ¼®ºÎ¿¡ »õ·Î Ãß°¡ (ÇĞ¹ø: {ÀÌ¸§, ½Ã°£, Ãâ¼®¿©ºÎ})
-        self.attendance_data[student_id] = {
-            "name": name,
-            "attendance": True
-        }
-        self._save_attendance() # ÆÄÀÏ ÀúÀå
+        # 2. í•™ìƒì´ ì—†ìœ¼ë©´ ì—ëŸ¬
+        if not found_student:
+            return "NOT_FOUND"
+
+        # 3. ì´ë¯¸ ì¶œì„í–ˆëŠ”ì§€ í™•ì¸ ("attend" í‚¤ ì‚¬ìš©)
+        if found_student.get("attend") is True:
+            return "ALREADY"
+
+        # 4. ì¶œì„ ì²˜ë¦¬ ë° ì €ì¥
+        found_student["attend"] = True
+        self._save_data()
         return "SUCCESS"
 
-    # 3. µ¥ÀÌÅÍ È®ÀÎ ÇÔ¼ö (°³ÀÎ »óÅÂ)
-    def get_student_status(self, student_id):
-        if student_id in self.attendance_data:
-            return True
-        return False
-
-    # 4. µ¥ÀÌÅÍ¸¦ ¹ñ¾î³»´Â ÇÔ¼ö (ÀüÃ¼ Ãâ¼® ¸í´Ü)
-    def get_all_data(self):
-        # µñ¼Å³Ê¸®¸¦ ¸®½ºÆ®·Î º¯È¯ÇØ¼­ ¹İÈ¯
-        result_list = []
-        for s_id, info in self.attendance_data.items():
-            entry = {
-                "id": s_id,
-                "name": info["name"],
-                "attendance": info["attendance"]
-            }
-            result_list.append(entry)
-        return result_list
+# í…ŒìŠ¤íŠ¸ ì½”ë“œ
+if __name__ == "__main__":
+    dm = DataManager()
+    print(dm.mark_attendance("2024001", "ê¹€ì² ìˆ˜"))

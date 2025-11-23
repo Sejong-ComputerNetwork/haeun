@@ -33,7 +33,7 @@ class DataManager:
                 found_student = student
                 break
         
-        # 2. 학생이 없으면 에러
+        # 2. 학생이 없으면 에러 (DB에 없는 사람)
         if not found_student:
             return "NOT_FOUND"
 

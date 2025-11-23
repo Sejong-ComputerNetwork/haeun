@@ -150,10 +150,10 @@ def route_http(method, path, body):
                     query = urllib.parse.urlparse(path).query
                     params = urllib.parse.parse_qs(query)
                     user_id = params.get("id", [""])[0]
-                    data = dataHandler.getEntry(user_id)
-                    response_dict = {"message":"GET: 유저 정보 조회", "data":data}
+                    response_dict = {"message": "개별 조회는 아직"}
                 else:
-                    response_dict = {"message":"GET: 전체 유저 목록"}
+                    all_students = manager.get_all_data()
+                    response_dict = {"message": "성공", "data": all_students}        
                 status = "200 OK"
             elif method == "POST":
                 data = json.loads(body)
@@ -231,3 +231,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

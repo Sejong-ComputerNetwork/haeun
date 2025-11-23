@@ -4,12 +4,72 @@ import logging
 import os
 import json
 import urllib.parse
-from DataManager import DataManager
+from DataManager import DataManager 
 
-# 로깅 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-manager = DataManager()
+class DataHandler:
+    _dbPath = "./db/"
+
+    def __init__(self):
+        if not os.path.exists(self._dbPath):
+            os.makedirs(self._dbPath)
+
+    def addNewEntry(self, newId, newName):
+        newEntry = {"id": newId, "name": newName}
+        try:
+            with open(self._dbPath + "{}.json".format(newId), "x", encoding="utf-8") as fp:
+                json.dump(newEntry , fp, indent=4, ensure_ascii=False) 
+        except FileExistsError:
+            print("id:{} already exists".format(newId))
+            raise
+
+    def editEntry(self, id, newName): 
+        try:
+            data = self.getEntry(id) 
+        except:
+            print("failed to get data in editEntry")
+            raise
+
+        data["name"] = newName
+        with open(self._dbPath + "{}.json".format(id), "w", encoding="utf-8") as fp:
+            json.dump(data, fp, indent=4, ensure_ascii=False)
+
+    def getEntry(self, id):
+        try:
+            with open(self._dbPath + "{}.json".format(id), "r", encoding="utf-8") as fp:
+                data = json.load(fp) 
+        except FileNotFoundError:
+            print("id:{} does not exists".format(id))
+            raise
+        return data
+
+# [전역 객체 생성]
+dataHandler = DataHandler()   
+manager = DataManager()      
+
+def load_html(filename):
+    filepath = os.path.join("templates", filename)
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<h1>404 File Not Found</h1>"
+
+def parse_http_request(data):
+    lines = data.split("\r\n")
+    request_line = lines[0]
+    if not request_line: return "GET", "/", ""
+    
+    parts = request_line.split()
+    method = parts[0]
+    path = parts[1]
+    
+    body = ""
+    if method in ["POST", "PUT", "DELETE"]:
+        if "\r\n\r\n" in data:
+            body = data.split("\r\n\r\n", 1)[1]
+    return method, path, body
 
 def build_response(body, status="200 OK", content_type="text/html"):
     response = (
@@ -21,27 +81,28 @@ def build_response(body, status="200 OK", content_type="text/html"):
     )
     return response
 
+# [라우팅 함수]
 def route_http(method, path, body):
-    # 윤희님이 만든 메인 페이지 (index.html) 보여주기
+    
+    # 1. 메인 페이지 (GET /) -> 윤희님의 index.html 보여주기
     if method == "GET" and path == "/":
-        try:
-            with open("./templates/index.html", "r", encoding="utf-8") as f:
-                html = f.read()
-            return html, "200 OK", "text/html"
-        except FileNotFoundError:
-            return "<h1>index.html 파일이 없습니다.</h1>", "404 Not Found", "text/html"
+        return load_html("index.html"), "200 OK"
 
+    # 2. [추가] CSS 파일 처리 (style.css가 있다면)
     elif method == "GET" and path.endswith(".css"):
         try:
-            filename = path.lstrip("/") # "/style.css" -> "style.css"
-            css_path = os.path.join("./templates", filename) 
+            filename = path.lstrip("/")
+            css_path = os.path.join("./templates", filename)
             with open(css_path, "r", encoding="utf-8") as f:
-                css_data = f.read()
-            return css_data, "200 OK", "text/css"
+                return f.read(), "200 OK", "text/css"
         except:
             return "", "404 Not Found", "text/css"
 
-    # API 경로 변경 (/api/checkin -> /api/attendance)
+    # 3. [추가] 관리자 페이지 (GET /admin.html)
+    elif method == "GET" and path == "/admin.html":
+        return load_html("admin.html"), "200 OK"
+
+    # 4.출석 체크 API (POST /api/attendance)
     elif method == "POST" and path == "/api/attendance":
         try:
             if not body:
@@ -54,12 +115,10 @@ def route_http(method, path, body):
             # DataManager에게 일 시키기
             result = manager.mark_attendance(student_id, name)
             
-            # [변경 3] 응답 키값 변경 ("msg" -> "message")
+            # 응답 메시지
             if result == "SUCCESS":
                 return json.dumps({"message": "출석 성공"}), "200 OK", "application/json"
             elif result == "ALREADY":
-                # 윤희님 코드는 200이 아니면 오류로 띄우므로, 이미 출석했을 때도 오류 메시지처럼 보이게 할지,
-                # 아니면 그냥 성공처럼 보이게 할지 결정해야 함. 일단 에러 메시지로 보냄.
                 return json.dumps({"message": "이미 출석 처리가 된 상태입니다."}), "202 Accepted", "application/json"
             elif result == "NOT_FOUND":
                 return json.dumps({"message": "학번 또는 이름이 일치하지 않습니다."}), "401 Unauthorized", "application/json"
@@ -67,24 +126,61 @@ def route_http(method, path, body):
         except Exception as e:
             return json.dumps({"message": f"서버 에러: {e}"}), "500 Internal Server Error", "application/json"
 
-    return "<h1>404 Not Found</h1>", "404 Not Found", "text/html"
+    # 5. 회원가입 폼 제출 (POST /submit) - 유지
+    elif method == "POST" and path == "/submit":
+        params = urllib.parse.parse_qs(body)
+        name = params.get("name", [""])[0]
+        student_id = params.get("student_id", [""])[0]
 
+        try:
+            dataHandler.addNewEntry(student_id, name)
+        except:
+            dataHandler.editEntry(student_id, name)
 
-def parse_http_request(data):
-    lines = data.split("\r\n")
-    request_line = lines[0]
-    if not request_line: return "GET", "/", ""
-    
-    parts = request_line.split()
-    method = parts[0]
-    path = parts[1]
-    
-    body = ""
-    # Content-Length 확인 등의 복잡한 로직 대신 간단히 빈 줄 뒤를 바디로 인식
-    if "\r\n\r\n" in data:
-        body = data.split("\r\n\r\n", 1)[1]
-        
-    return method, path, body
+        html = load_html("submit.html")
+        html = html.replace("{name}", name).replace("{student_id}", student_id)
+        return html, "200 OK"
+
+    # 6. 회원 관리 API (/api/user) - 유지
+    elif path.startswith("/api/user"):
+        response_dict = {}
+        try:
+            if method == "GET":
+                if "?" in path:
+                    query = urllib.parse.urlparse(path).query
+                    params = urllib.parse.parse_qs(query)
+                    user_id = params.get("id", [""])[0]
+                    data = dataHandler.getEntry(user_id)
+                    response_dict = {"message":"GET: 유저 정보 조회", "data":data}
+                else:
+                    response_dict = {"message":"GET: 전체 유저 목록"}
+                status = "200 OK"
+            elif method == "POST":
+                data = json.loads(body)
+                dataHandler.addNewEntry(data["id"], data["name"])
+                response_dict = {"message":"POST: 새 유저 생성", "data":data}
+                status = "201 Created"
+            elif method == "PUT":
+                data = json.loads(body)
+                dataHandler.editEntry(data["id"], data["name"])
+                response_dict = {"message":"PUT: 유저 정보 수정", "data":data}
+                status = "200 OK"
+            elif method == "DELETE":
+                data = json.loads(body)
+                os.remove(f"./db/{data['id']}.json")
+                response_dict = {"message":"DELETE: 유저 삭제", "data":data}
+                status = "200 OK"
+            else:
+                response_dict = {"message":"허용되지 않는 메서드"}
+                status = "405 Method Not Allowed"
+        except Exception as e:
+            response_dict = {"message":"오류 발생", "error":str(e)}
+            status = "400 Bad Request"
+
+        return json.dumps(response_dict, ensure_ascii=False), status, "application/json"
+
+    # 404 처리
+    return load_html("404.html"), "404 Not Found"
 
 def handle_client(client_socket, client_address):
     logging.info(f"Client connected: {client_address}")
@@ -99,6 +195,7 @@ def handle_client(client_socket, client_address):
 
         result = route_http(method, path, body)
         
+        # 3개 반환값 처리 (JSON 대응)
         if len(result) == 2:
             body, status = result
             content_type = "text/html"
@@ -113,7 +210,7 @@ def handle_client(client_socket, client_address):
         client_socket.close()
 
 def main():
-    # 로컬 테스트용
+    # [중요] 127.0.0.1로 고정 (localhost 접속용)
     HOST = '127.0.0.1' 
     PORT = 1234
 

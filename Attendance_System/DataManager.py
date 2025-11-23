@@ -45,11 +45,12 @@ class DataManager:
         found_student["attend"] = True
         self._save_data()
         return "SUCCESS"
+        
+def get_all_data(self):
+        return self.data
+
 
 # 테스트 코드
 if __name__ == "__main__":
     dm = DataManager()
     print(dm.mark_attendance("2024001", "김철수"))
-
-def get_all_data(self):
-        return self.data

@@ -1,20 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>학생 정보 입력</title>
+    <title>학생 출석 페이지</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-    <h1>학생 정보 입력</h1>
+    <div class="container">
+      <h2>학생 출석체크</h2>
 
-    <form action="/submit" method="POST">
-      <label>학번:</label><br />
-      <input type="text" name="student_id" required /><br /><br />
+      <label>학번</label>
+      <input type="text" id="studentId" placeholder="학번을 입력하세요" />
 
-      <label>이름:</label><br />
-      <input type="text" name="name" required /><br /><br />
+      <label>이름</label>
+      <input type="text" id="studentName" placeholder="이름을 입력하세요" />
 
-      <button type="submit">SUBMIT</button>
-    </form>
+      <button class="submit-button" onclick="submitAttendance()">
+        출석하기
+      </button>
+
+      <div class="result-box" id="resultBox"></div>
+
+      <!-- 관리자 이동 버튼 (하단 오른쪽 / 스타일 최소화) -->
+      <div class="admin-btn-area">
+        <button class="admin-btn" onclick="location.href='/admin.html'">
+          관리자 페이지
+        </button>
+      </div>
+    </div>
+
+    <script>
+      async function submitAttendance() {
+        const id = document.getElementById("studentId").value.trim();
+        const name = document.getElementById("studentName").value.trim();
+        const resultBox = document.getElementById("resultBox");
+
+        if (!id || !name) {
+          resultBox.style.display = "block";
+          resultBox.innerHTML = "<b>⚠ 학번과 이름을 모두 입력하세요.</b>";
+          return;
+        }
+
+        const res = await fetch("/api/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: id, name: name }),
+        });
+
+        const data = await res.json();
+        resultBox.style.display = "block";
+
+        if (res.status === 200) {
+          resultBox.innerHTML = `<b>출석이 완료되었습니다!</b><br>학번: ${id}<br>이름: ${name}`;
+        } else {
+          resultBox.innerHTML = `<b>⚠ 오류:</b> ${data.message}`;
+        }
+      }
+    </script>
   </body>
 </html>

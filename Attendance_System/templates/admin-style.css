@@ -1,0 +1,122 @@
+/* 기본 바디 스타일 */
+body {
+  font-family: Arial, sans-serif;
+  margin: 40px;
+  background-color: #fdfdfd;
+  color: #333;
+}
+
+/* 컨테이너 카드 스타일 */
+.container {
+  max-width: 500px;
+  margin: auto;
+  padding: 25px;
+  border-radius: 15px;
+  background-color: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 제목 스타일 */
+h2 {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+/* 테이블 스타일 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  font-weight: bold;
+}
+
+/* 동그라미 체크박스 */
+.circle-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.circle-check:checked {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+.circle-check:checked::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  border-radius: 50%;
+}
+
+/* 저장 버튼 */
+#saveBtn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #4caf50;
+  color: #fff;
+}
+
+#saveBtn:hover {
+  background-color: #45a049;
+}
+
+/* 결과 박스 (index.html 사용 가능) */
+.result-box {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  display: none;
+}
+
+/*학생 추가 폼*/
+
+.add-student {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+  align-items: center;
+}
+
+.add-student input[type="text"] {
+  width: 145px;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #aaa;
+}
+
+.add-student button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.add-student button:hover {
+  background-color: #45a049;
+}
